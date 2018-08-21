@@ -1,0 +1,75 @@
+{
+  "name": "bitrewards",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "tslint -p \".\" -t stylish",
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest --coverage"
+  },
+  "rnpm": {
+    "assets": [
+      "./assets/fonts/"
+    ]
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "immutable": "^3.8.2",
+    "intl": "^1.2.5",
+    "moment": "^2.22.2",
+    "react": "16.4.1",
+    "react-intl": "^2.4.0",
+    "react-native": "0.56.0",
+    "react-native-svg": "^6.5.2",
+    "react-native-svg-uri": "^1.2.3",
+    "react-navigation": "^2.8.0",
+    "react-navigation-redux-helpers": "^2.0.5",
+    "react-redux": "^5.0.7",
+    "redux": "^4.0.0",
+    "redux-saga": "^0.16.0",
+    "reselect": "^3.0.1",
+    "styled-components": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta",
+    "@types/jest": "^23.3.0",
+    "@types/react": "^16.4.6",
+    "@types/react-intl": "^2.3.8",
+    "@types/react-native": "^0.56.4",
+    "@types/react-navigation": "^2.0.11",
+    "@types/react-redux": "^6.0.6",
+    "@types/react-test-renderer": "^16.0.1",
+    "@types/redux-immutable": "^3.0.38",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-jest": "23.4.0",
+    "babel-preset-react-native": "5.0.2",
+    "jest": "^23.4.1",
+    "react-native-typescript-transformer": "^1.2.10",
+    "react-test-renderer": "^16.4.1",
+    "ts-jest": "^23.0.1",
+    "tslint": "^5.11.0",
+    "tslint-eslint-rules": "^4.1.1",
+    "tslint-react": "^3.6.0",
+    "tslint-react-recommended": "^1.0.15",
+    "typescript": "^2.9.2"
+  },
+  "jest": {
+    "preset": "react-native",
+    "transform": {
+      "^.+\\.js$": "<rootDir>/node_modules/react-native/jest/preprocessor.js",
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "!node_modules/react-runtime"
+    ],
+    "testRegex": "(/.*\\.(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+fastlane_version "2.70.0"
+
+fastlane_require 'spare_keys'
+
+default_platform :ios
+
+platform :ios do
+
+  lane :build do
+    # устанавливаем номер билда в настройки проекта
+    increment_build_number(build_number: ENV["BUILD_NUMBER"])
+    # ставим поды
+    sh("pod install")
+    # убираем автоподпись
+    disable_automatic_code_signing
+    # создаем временный кейчейн
+    SpareKeys.temp_keychain(true) { |temp_keychain_path, keychain_password|
+      # загружаем данные для подписи
+      match(app_identifier: ENV["BUILD_APP_IDENTIFIER"],
+        type: 'development',
+        keychain_name: temp_keychain_path)
+      # разрешаем доступ к кейчейну
+      `security set-key-partition-list -S apple-tool:,apple: -k "#{keychain_password}" #{temp_keychain_path}`
+      # собираем билд
+      gym({
+        scheme: ENV["BUILD_SCHEME"],
+        export_method: 'development',
+        xcargs: '-allowProvisioningUpdates',
+        skip_package_ipa: true,
+        clean: true,
+        build_path: 'archive'
+      })
+    }
+    # возвращаем автоподпись
+    enable_automatic_code_signing
+    # вытаскиваем архив
+    sh("cd .. && mv '#{lane_context[SharedValues::XCODEBUILD_ARCHIVE]}' #{ENV["XCARCHIVE_NAME"]}")
+    sh("cd .. && zip -r #{ENV["XCZIP_NAME"]} #{ENV["XCARCHIVE_NAME"]}")
+    # собираем список задач сделанных с последнего билда
+    commits_changelog = changelog_from_git_commits(tag_match_pattern: 'build/*')
+    issue_ids = commits_changelog.scan(/^[a-zA-Z]*-\d+/).sort().uniq()
+    issues_string = issue_ids.join(",")
+    File.open("../" + ENV['CHANGELOG_FILE'], 'w') { |file| file.write(issues_string) }
+  end
+
+  lane :deploy_fabric do
+    sh("cd .. && unzip #{ENV["XCZIP_NAME"]}")
+    match_type = ENV["BUILD_EXPORT_METHOD"].tr('-', '')
+    # создаем временный кейчейн
+    SpareKeys.temp_keychain(true) { |temp_keychain_path, keychain_password|
+      # загружаем данные для подписи
+      match(app_identifier: ENV["BUILD_APP_IDENTIFIER"], 
+        type: match_type, 
+        keychain_name: temp_keychain_path)
+      # разрешаем доступ к кейчейну
+      `security set-key-partition-list -S apple-tool:,apple: -k "#{keychain_password}" #{temp_keychain_path}`
+      # экспортируем приложение
+      gym({
+        scheme: ENV["BUILD_SCHEME"],
+        skip_build_archive: true,
+        export_method: ENV["BUILD_EXPORT_METHOD"],
+        archive_path: ENV["XCARCHIVE_NAME"],
+        output_name: ENV["IPA_NAME"]
+      })
+      # ставим под крашлитикса для экспорта приложения в фабрику
+      sh("pod update Crashlytics")
+      # отправляем в крашлитикс
+      crashlytics(
+        api_token: ENV["BUILD_CRASHLYTICS_API_TOKEN"],
+        build_secret: ENV["BUILD_CRASHLYTICS_BUILD_SECRET"],
+        groups: ENV["BUILD_CRASHLYTICS_TEST_GROUPS"],
+        notifications: true
+      )
+    }
+    # отправляем dsym'ы в крашлитикс
+    upload_symbols_to_crashlytics(api_token: ENV["BUILD_CRASHLYTICS_API_TOKEN"])
+  end
+  
+  lane :deploy_appstore do
+    sh("cd .. && unzip #{ENV["XCZIP_NAME"]}")
+    # создаем временный кейчейн
+    SpareKeys.temp_keychain(true) { |temp_keychain_path, keychain_password|
+      # загружаем данные для подписи
+      match(app_identifier: ENV["BUILD_APP_IDENTIFIER"], 
+        type: 'appstore', 
+        keychain_name: temp_keychain_path)
+      # разрешаем доступ к кейчейну
+      `security set-key-partition-list -S apple-tool:,apple: -k "#{keychain_password}" #{temp_keychain_path}`
+      # экспортируем приложение
+      gym({
+        scheme: ENV["BUILD_SCHEME"], 
+        skip_build_archive: true,
+        export_method: 'app-store', 
+        archive_path: ENV["XCARCHIVE_NAME"],
+        output_name: ENV["IPA_NAME"]
+      })
+    }
+    # отправляем в appstore
+    upload_to_testflight(
+      skip_submission: true,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
