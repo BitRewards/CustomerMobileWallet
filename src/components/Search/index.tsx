@@ -3,8 +3,8 @@ import {
   StyleSheet,
   TextInput,
   View,
-  Image,
-} from 'react-native';
+  Image, NativeSyntheticEvent, TextInputSubmitEditingEventData,
+} from 'react-native'
 
 const styles = StyleSheet.create({
   container: {
@@ -31,19 +31,32 @@ const styles = StyleSheet.create({
   },
 });
 
-export interface Props { }
+export interface SearchProps {
+  onChangeText?: (text: string) => void;
+  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  value?: string;
+}
 export interface State { }
 
-class Search extends React.Component<Props, State> {
+class Search extends React.Component<SearchProps, State> {
   render() {
+    const {
+      onChangeText,
+      onSubmitEditing,
+      value,
+    } = this.props;
     return (
       <View style={styles.container}>
         <Image source={require('../../img/ic_search.png')} style={styles.searchIconBox} />
         <TextInput
           style={styles.centerText}
           placeholder='Search'
+          selectionColor={'#ff764a'}
           placeholderTextColor='#00000040'
           underlineColorAndroid='transparent'
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
+          value={value}
         />
       </View>
     );

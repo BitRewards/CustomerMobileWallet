@@ -20,7 +20,11 @@ class CentredActivityIndicator extends React.Component<Props, State> {
   render() {
     return (
       <View style={styles.activityIndicator}>
-        <ActivityIndicator animating size='large' />
+        <ActivityIndicator
+          animating
+          size='large'
+          color='#ff764a'
+        />
       </View>
     );
   }

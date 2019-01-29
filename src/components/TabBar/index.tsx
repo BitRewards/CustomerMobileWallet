@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
 
 export interface TabBarProps {
   children: JSX.Element | JSX.Element[];
+  activeIndex?: number;
   onChange?: (index: number) => void;
 }
 export interface TabBarState {
@@ -27,8 +28,15 @@ class TabBar extends React.Component<TabBarProps, TabBarState> {
     super(props);
 
     this.state = {
-      activeIndex: 0,
+      activeIndex: props.activeIndex || 0,
     };
+  }
+
+  componentWillReceiveProps(nextProps: TabBarProps) {
+    if (typeof nextProps.activeIndex === 'number' && this.state.activeIndex !== nextProps.activeIndex) {
+      const activeIndex: number = nextProps.activeIndex;
+      this.setState({ activeIndex });
+    }
   }
 
   toggleTab = (index: number): void => {

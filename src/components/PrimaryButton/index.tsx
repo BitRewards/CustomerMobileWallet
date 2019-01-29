@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
 export interface PrimaryButtonProps {
   title?: string;
   onPress?: () => void;
+  disabled?: boolean;
 }
 export interface State { }
 
@@ -51,11 +52,13 @@ class PrimaryButton extends React.Component<PrimaryButtonProps, State> {
     const {
       title,
       onPress,
+      disabled,
     } = this.props;
     return (
       <View style={styles.container}>
         <Touchable
           onPress={onPress}
+          disabled={disabled}
           style={styles.touchable}
         >
           <View style={styles.buttonContainer}>

@@ -11,3 +11,8 @@ export const totalFiatAmountSelector = createSelector(
   walletItemsSelector,
   items => items.reduce((acc, item) => acc + item.fiatAmount, 0),
 );
+
+export const totalFiatCurrencySelector = createSelector(
+  walletItemsSelector,
+  items => items.length > 0 ? items[0].fiatCurrency : '',
+);

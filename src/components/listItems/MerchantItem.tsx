@@ -5,6 +5,7 @@ import {
   Text,
 } from 'react-native';
 import ClickableItemContainer from './ClickableItemContainer';
+import { getBitValueString } from '../../utils/currency';
 
 const styles = StyleSheet.create({
   container: {
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
 export interface MerchantItemProps {
   onPress?: () => void;
   highlight?: boolean;
+  image?: string;
   title: string;
   balanceAmount: number;
 }
@@ -37,12 +39,14 @@ class MerchantItem extends React.Component<MerchantItemProps, State> {
     const {
       onPress,
       highlight,
+      image,
       title,
       balanceAmount,
     } = this.props;
     return (
       <ClickableItemContainer
         onPress={onPress}
+        image={image}
         highlight={highlight}
       >
         <View style={styles.container}>
@@ -50,7 +54,7 @@ class MerchantItem extends React.Component<MerchantItemProps, State> {
             {title || ' '}
           </Text>
           <Text style={styles.bitText}>
-            {`${balanceAmount || 0} BIT`}
+            {getBitValueString(balanceAmount)}
           </Text>
         </View>
       </ClickableItemContainer>

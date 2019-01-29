@@ -2,25 +2,33 @@
  * Кошелек мерчанта.
  */
 
-import { fromJS, List } from 'immutable';
+import { fromJS } from 'immutable';
+import { Reducer } from 'redux';
 import * as sessionActions from '../actions/session';
 import * as navigationActions from '../actions/navigation';
 import * as merchantActions from '../actions/merchant';
+import { PartnerInfoResponse } from '../services/responseTypes';
 
 const initialState = fromJS({
   isFetching: false,
-  key: '',
+  partnerKey: '',
   title: '',
   image: null,
   balanceAmount: 0,
   fiatAmount: 0,
   fiatCurrency: null,
   couponsCount: 0,
-  couponsList: [],
   error: null,
+  settings: fromJS({
+    minWithdraw: '',
+    maxWithdraw: '',
+    withdrawFeeAmount: 0,
+    withdrawFeeType: '',
+  }),
+  ethAddress: '',
 });
 
-export const historyReducer = (
+export const merchantReducer: Reducer = (
   state = initialState,
   action: sessionActions.SessionActions | merchantActions.MerchantActions | navigationActions.NavigationActions,
 ) => {
@@ -32,7 +40,7 @@ export const historyReducer = (
     }
     case navigationActions.OPEN_WALLET_MERCHANT: {
       return state
-        .set('key', action.payload.merchant.partner.key)
+        .set('partnerKey', action.payload.merchant.partner.key)
         .set('title', action.payload.merchant.partner.title)
         .set('image', action.payload.merchant.partner.image)
         .set('balanceAmount', action.payload.merchant.balanceAmount)
@@ -43,7 +51,7 @@ export const historyReducer = (
     case merchantActions.FETCH_WALLET_MERCHANT_INFO_SUCCESS: {
       return state
         .set('isFetching', false)
-        .set('key', action.payload.partner.key)
+        .set('partnerKey', action.payload.partner.key)
         .set('title', action.payload.partner.title)
         .set('image', action.payload.partner.image)
         .set('balanceAmount', action.payload.balanceAmount)
@@ -52,9 +60,14 @@ export const historyReducer = (
         .set('couponsCount', action.payload.couponsCount)
         .set('error', null);
     }
-    case merchantActions.FETCH_WALLET_MERCHANT_COUPONS_SUCCESS: {
+    case merchantActions.FETCH_WALLET_MERCHANT_LIMITS_SUCCESS: {
+      const partnerInfo: PartnerInfoResponse = action.payload.data;
       return state
-        .set('couponsList', List(action.payload));
+        .setIn(['settings', 'minWithdraw'], partnerInfo.settings.minWithdraw)
+        .setIn(['settings', 'maxWithdraw'], partnerInfo.settings.maxWithdraw)
+        .setIn(['settings', 'withdrawFeeAmount'], partnerInfo.settings.withdrawFeeAmount)
+        .setIn(['settings', 'withdrawFeeType'], partnerInfo.settings.withdrawFeeType)
+        .set('ethAddress', partnerInfo.ethAddress);
     }
     case merchantActions.FETCH_WALLET_MERCHANT_INFO_FAILURE: {
       return state
@@ -69,4 +82,4 @@ export const historyReducer = (
   }
 };
 
-export default historyReducer;
+export default merchantReducer;

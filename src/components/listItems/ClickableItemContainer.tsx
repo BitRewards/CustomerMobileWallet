@@ -73,8 +73,8 @@ class ClickableItemContainer extends React.Component<ClickableItemContainerProps
                 { (typeof image === 'string') && (
                     // @ts-ignore
                     <BitImage
-                      width='50'
-                      height='50'
+                      width={50}
+                      height={50}
                       uri={image}
                     />
                   )

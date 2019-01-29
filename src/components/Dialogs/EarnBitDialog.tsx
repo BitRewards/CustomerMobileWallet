@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-  Dimensions,
   StyleSheet,
   View,
   Text,
@@ -8,25 +7,7 @@ import {
 import ModalDialog from './ModalDialog';
 import PrimaryButton from '../PrimaryButton';
 
-const { width } = Dimensions.get('window');
-
-const MODAL_DIALOG_SAFE_MARGIN = 24;
-
 const styles = StyleSheet.create({
-  modalBackground: {
-    backgroundColor: 'white',
-    flex: 1,
-    flexGrow: 1,
-    width: width - MODAL_DIALOG_SAFE_MARGIN * 2,
-    elevation: 4,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowRadius: 3,
-    shadowOpacity: 0.5,
-    borderRadius: 4,
-  },
   contentContainer: {
     flexDirection: 'column',
     paddingStart: 22,
@@ -49,7 +30,6 @@ const styles = StyleSheet.create({
 });
 
 export interface EarnBitDialogProps {
-  children: JSX.Element | JSX.Element[];
   /**
    * The `visible` prop determines whether your modal is visible.
    */
@@ -59,6 +39,10 @@ export interface EarnBitDialogProps {
    * _On the Android platform, this is a required function._
    */
   onRequestClose?: () => void;
+  title: string;
+  description: string;
+  buttonLabel?: string;
+  onPress?: () => void;
 }
 export interface State { }
 
@@ -67,6 +51,10 @@ class EarnBitDialog extends React.Component<EarnBitDialogProps, State> {
     const {
       visible,
       onRequestClose,
+      title,
+      description,
+      buttonLabel,
+      onPress,
     } = this.props;
     return (
       <ModalDialog
@@ -74,16 +62,19 @@ class EarnBitDialog extends React.Component<EarnBitDialogProps, State> {
         visible={visible}
         shadeColor={'#e8e8e890'}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>
-              {'Discount $2'}
-            </Text>
-            <Text style={styles.description}>
-              {'Use $2 discount for purchase over $5000'}
-            </Text>
-            <PrimaryButton title={'200 BIT'} />
-          </View>
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>
+            {title}
+          </Text>
+          <Text style={styles.description}>
+            {description}
+          </Text>
+          { typeof onPress === 'function' && (
+            <PrimaryButton
+              title={buttonLabel}
+              onPress={onPress}
+            />
+          )}
         </View>
       </ModalDialog>
     );

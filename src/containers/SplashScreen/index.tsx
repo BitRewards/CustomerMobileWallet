@@ -1,8 +1,12 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  View,
+} from 'react-native';
 import { AppActions } from '../../actions/app';
+import AuthLogo from '../../components/AuthLogo';
 
 const styles = StyleSheet.create({
   container: {
@@ -35,9 +39,7 @@ class SplashScreen extends React.Component<SplashScreenProps, State> {
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.centerText}>
-          Empty SplashScreen
-        </Text>
+        <AuthLogo />
       </View>
     );
   }

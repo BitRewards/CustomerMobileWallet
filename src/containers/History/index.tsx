@@ -5,13 +5,21 @@ import {
   StatusBar,
   FlatList,
   ListRenderItemInfo,
+  RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-navigation';
 import { Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { HistoryActions } from '../../actions/history';
+import SafeContainer from '../../components/SafeContainer';
 import WalletHistoryItem from '../../components/listItems/WalletHistoryItem';
+import { PersonTransactionItem } from '../../services/responseTypes';
 import CentredActivityIndicator from '../../components/CentredActivityIndicator';
+import {
+  createStructuredSelectorTransactionHistory,
+} from '../../selectors/history';
+import EmptyList from '../../components/EmptyList';
+import { PaginatedListProps } from '../../types/paginatedListProps';
+import { NavigationInjectedProps } from 'react-navigation';
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -28,22 +36,44 @@ const styles = StyleSheet.create({
   },
 });
 
-export interface HistoryProps {
+const DEFAULT_PER_PAGE = 15;
+
+export interface HistoryProps extends PaginatedListProps<PersonTransactionItem> {
+  refreshHistory: () => void;
   fetchHistory: (page: number, perPage: number) => any;
-  isFetching: boolean;
-  items: any;
-  error: any;
 }
 
 export interface State { }
 
-class History extends React.Component<HistoryProps, State> {
+class History extends React.Component<HistoryProps & NavigationInjectedProps, State> {
+  static navigationOptions = {
+    title: 'History',
+    headerStyle: {
+      backgroundColor: '#ffffff',
+    },
+  };
 
   componentDidMount() {
+    this.onRefresh();
+  }
+
+  onRefresh = () => {
+    const {
+      refreshHistory,
+    } = this.props;
+    refreshHistory();
+  }
+
+  loadNext = () => {
     const {
       fetchHistory,
+      lastLoadedPage,
+      isReachedEnd,
     } = this.props;
-    fetchHistory(1, 15);
+    if (!isReachedEnd) {
+      const nextPage = lastLoadedPage + 1;
+      fetchHistory(nextPage, DEFAULT_PER_PAGE);
+    }
   }
 
   renderItem = (listItemInfo: ListRenderItemInfo<any>) => {
@@ -52,12 +82,7 @@ class History extends React.Component<HistoryProps, State> {
     } = listItemInfo;
     return (
       <WalletHistoryItem
-        id={item.id}
-        title={item.title}
-        changedAt={item.changedAt}
-        balanceChange={item.changeBalanceAmount}
-        fiatChangeBalanceAmount={item.fiatChangeBalanceAmount}
-        fiatChangeBalanceCurrency={item.fiatChangeBalanceCurrency}
+        item={item}
       />
     );
   }
@@ -73,44 +98,51 @@ class History extends React.Component<HistoryProps, State> {
 
   render() {
     const {
+      isRefreshing,
       isFetching,
     } = this.props;
+    const flatListData = this.getFlatListData();
     return (
-      <SafeAreaView style={styles.safeContainer}>
+      <SafeContainer>
         <StatusBar
           barStyle='dark-content'
           backgroundColor='#ffffff'
         />
         <View style={styles.container}>
           {
-            isFetching && (
+            isFetching && flatListData.length <= 0 && (
               <CentredActivityIndicator />
             )
           }
           {
-            !isFetching && (
+            (!isFetching || flatListData.length > 0) && (
               <FlatList
                 contentContainerStyle={styles.listContainer}
-                data={this.getFlatListData()}
+                data={flatListData}
                 keyExtractor={this.keyExtractor}
                 renderItem={this.renderItem}
+                refreshControl={(
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={this.onRefresh}
+                  />
+                )}
+                onEndReached={this.loadNext}
+                ListEmptyComponent={<EmptyList emptyMessage={'no transactions'} />}
               />
             )
           }
         </View>
-      </SafeAreaView>
+      </SafeContainer>
     );
   }
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
+  refreshHistory: () => dispatch(HistoryActions.refreshTransactionList()),
   fetchHistory: (page: number, perPage: number) => dispatch(HistoryActions.fetchTransactionList(page, perPage)),
 });
 
-const mapStateToProps = (state: any) => ({
-  isFetching: state.history.get('isFetching'),
-  items: state.history.get('items').toJS(),
-  error: state.history.get('error'),
-});
+const mapStateToProps = (): (state: any) => PaginatedListProps<PersonTransactionItem> => createStructuredSelectorTransactionHistory;
 
 export default connect(mapStateToProps, mapDispatchToProps)(History);

@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   StyleSheet,
   View,
+  Image,
 } from 'react-native';
 import * as SvgUri from 'react-native-svg-uri';
 import ErrorBoundary from '../ErrorBoundary';
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
 export interface BitImageProps {
   width?: number | string;
   height?: number | string;
-  uri: string;
+  uri?: string;
 }
 export interface State { }
 
@@ -40,7 +41,7 @@ class BitImage extends React.Component<BitImageProps, State> {
         renderErrorView={this.renderErrorView}
       >
         <View>
-          { (typeof uri === 'string') && (
+          { (typeof uri === 'string') && (uri.toLowerCase().endsWith('.svg')) && (
             // @ts-ignore
             <SvgUri
               width={width}
@@ -48,6 +49,14 @@ class BitImage extends React.Component<BitImageProps, State> {
               source={{uri}}
             />
           )
+          }
+          {
+            (typeof uri === 'string') && (uri.toLowerCase().endsWith('.png')) && (
+              <Image
+                style={{ width: Number(width), height: Number(height) }}
+                source={{ uri }}
+              />
+            )
           }
         </View>
       </ErrorBoundary>

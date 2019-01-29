@@ -5,14 +5,15 @@ import {
   StyleSheet,
   View,
   Text,
+  Image,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-navigation';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
-import MerchantItem from '../../components/listItems/MerchantItem';
 import Touchable from '../../components/Touchable';
 import * as sessionActions from '../../actions/session';
+import * as profileActions from '../../actions/profile';
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -37,10 +38,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   profileAvatar: {
-    width: 75,
-    height: 75,
+    width: 73,
+    height: 73,
     borderRadius: 40,
-    backgroundColor: '#ff764a',
     alignSelf: 'center',
   },
   userName: {
@@ -77,12 +77,24 @@ const styles = StyleSheet.create({
 });
 
 export interface ProfileProps {
-  logout: () => any;
+  logout: () => void;
+  fetchCurrentUser: (partnerKey: string) => void;
+  isFetching: boolean;
+  email: string | null;
+  name: string | null;
+  picture: string | null;
 }
 
 export interface State { }
 
 class Profile extends React.Component<ProfileProps, State> {
+
+  componentDidMount() {
+    const {
+      fetchCurrentUser,
+    } = this.props;
+    fetchCurrentUser('test-partner-key');
+  }
 
   logoutPress = () => {
     const { logout } = this.props;
@@ -91,15 +103,18 @@ class Profile extends React.Component<ProfileProps, State> {
 
   renderItem = (listItemInfo: ListRenderItemInfo<any>) => {
     return (
-      <MerchantItem
-        highlight
-      />
+      null
     );
   }
 
   keyExtractor = (item: any, index: number) => `offer-${index}`;
 
   render() {
+    const {
+      email,
+      name,
+    } = this.props;
+    const userName = name ? name : email;
     return (
       <SafeAreaView style={styles.safeContainer}>
         <StatusBar
@@ -109,11 +124,13 @@ class Profile extends React.Component<ProfileProps, State> {
         <View style={styles.container}>
           <View style={styles.profileHeader}>
             <View style={styles.profileAvatarWrapper}>
-              <View style={styles.profileAvatar} />
+              <View style={styles.profileAvatar}>
+                <Image source={require('../../img/empty_ava.png')} />
+              </View>
             </View>
             <View style={styles.headerCentredText}>
               <Text style={styles.userName}>
-                {'User Name'}
+                {userName || ' '}
               </Text>
             </View>
             <View style={styles.logoutButtonContainer}>
@@ -142,9 +159,14 @@ class Profile extends React.Component<ProfileProps, State> {
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
   logout: () => dispatch(sessionActions.SessionActions.logout()),
+  fetchCurrentUser: (partnerKey: string) => dispatch(profileActions.ProfileActions.fetchCurrentUser(partnerKey)),
 });
 
-const mapStateToProps = () => ({
+const mapStateToProps = (state: any) => ({
+  isFetching: state.profile.get('isFetching'),
+  email: state.profile.get('email'),
+  name: state.profile.get('name'),
+  picture: state.profile.get('picture'),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Profile);

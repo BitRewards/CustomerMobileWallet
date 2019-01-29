@@ -1,8 +1,8 @@
 import * as React from 'react';
 import {
   StyleSheet,
-  Text,
   View,
+  Image, ImageSourcePropType,
 } from 'react-native';
 import Touchable from '../../Touchable';
 
@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
 });
 
 export interface SocialButtonProps {
+  imageSource?: ImageSourcePropType;
   onPress?: () => void;
 }
 export interface State { }
@@ -33,14 +34,13 @@ export interface State { }
 class SocialButton extends React.Component<SocialButtonProps, State> {
   render() {
     const {
+      imageSource,
       onPress,
     } = this.props;
     return (
       <Touchable onPress={onPress} style={styles.touchable}>
         <View style={styles.container}>
-          <Text>
-            {''}
-          </Text>
+          {imageSource ? (<Image source={imageSource} />) : null}
         </View>
       </Touchable>
     );

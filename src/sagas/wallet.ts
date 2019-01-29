@@ -14,3 +14,11 @@ function* merchantWalletListFlow() {
 export function* merchantWalletListData() {
   yield takeLatest(walletActions.FETCH_WALLET_LIST_STARTED, merchantWalletListFlow);
 }
+
+function* refreshMerchantWalletListFlow() {
+  yield put(walletActions.WalletActions.fetchWalletList());
+}
+
+export function* refreshMerchantWalletListData() {
+  yield takeLatest(walletActions.REFRESH_WALLET_LIST, refreshMerchantWalletListFlow);
+}

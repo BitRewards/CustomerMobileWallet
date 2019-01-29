@@ -30,6 +30,10 @@ const styles = StyleSheet.create({
   active: {
     color: '#303645',
   },
+  touchable: {
+    flex: 1,
+    height: 44,
+  },
 });
 
 export interface TabBarProps {
@@ -47,7 +51,7 @@ class TabBar extends React.Component<TabBarProps, State> {
       onPress,
     } = this.props;
     return (
-      <Touchable onPress={onPress} style={{ flex: 1, height: 44, }}>
+      <Touchable onPress={onPress} style={styles.touchable}>
         <View style={styles.container}>
           <Text style={[styles.title, active ? styles.active : {}]}>
             {title}

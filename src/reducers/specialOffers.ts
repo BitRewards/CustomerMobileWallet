@@ -2,57 +2,28 @@
  * Special Offers.
  */
 
-import { fromJS, List } from 'immutable';
-import * as sessionActions from '../actions/session';
+import { Reducer } from 'redux';
+import { combineReducers } from 'redux-immutable';
 import * as specialOffersActions from '../actions/specialOffers';
+import { reducerPaginatedListFactory } from './helpers/basePaginatedList';
 
-const initialState = fromJS({
-  isFetching: false,
-  actionItems: [],
-  rewardItems: [],
-  error: null,
+const actionsReducer: Reducer = reducerPaginatedListFactory(
+  specialOffersActions.FETCH_OFFER_ACTIONS_LIST_STARTED,
+  specialOffersActions.FETCH_OFFER_ACTIONS_LIST_SUCCESS,
+  specialOffersActions.FETCH_OFFER_ACTIONS_LIST_FAILURE,
+  specialOffersActions.REFRESH_OFFER_ACTIONS_LIST,
+);
+
+const rewardsReducer: Reducer = reducerPaginatedListFactory(
+  specialOffersActions.FETCH_OFFER_REWARD_LIST_STARTED,
+  specialOffersActions.FETCH_OFFER_REWARD_LIST_SUCCESS,
+  specialOffersActions.FETCH_OFFER_REWARD_LIST_FAILURE,
+  specialOffersActions.REFRESH_OFFER_REWARD_LIST,
+);
+
+export const specialOffersReducer: Reducer = combineReducers({
+  actions: actionsReducer,
+  rewards: rewardsReducer,
 });
-
-export const specialOffersReducer = (state = initialState, action: sessionActions.SessionActions | specialOffersActions.SpecialOfferActions) => {
-  switch (action.type) {
-    case specialOffersActions.FETCH_OFFER_ACTIONS_LIST_STARTED: {
-      return state
-        .set('isFetching', true)
-        .set('error', null);
-    }
-    case specialOffersActions.FETCH_OFFER_ACTIONS_LIST_SUCCESS: {
-      return state
-        .set('isFetching', false)
-        .set('actionItems', List(action.payload))
-        .set('error', null);
-    }
-    case specialOffersActions.FETCH_OFFER_ACTIONS_LIST_FAILURE: {
-      return state
-        .set('isFetching', false)
-        .set('error', action.payload);
-    }
-    case specialOffersActions.FETCH_OFFER_REWARD_LIST_STARTED: {
-      return state
-        .set('isFetching', true)
-        .set('error', null);
-    }
-    case specialOffersActions.FETCH_OFFER_REWARD_LIST_SUCCESS: {
-      return state
-        .set('isFetching', false)
-        .set('rewardItems', List(action.payload))
-        .set('error', null);
-    }
-    case specialOffersActions.FETCH_OFFER_REWARD_LIST_FAILURE: {
-      return state
-        .set('isFetching', false)
-        .set('error', action.payload);
-    }
-    case sessionActions.LOGOUT: {
-      return initialState;
-    }
-    default:
-      return state;
-  }
-};
 
 export default specialOffersReducer;

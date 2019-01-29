@@ -8,5 +8,7 @@ target 'bitrewards' do
   # Pods for bitrewards
   pod 'Fabric'
   pod 'Crashlytics'
+  pod 'FBSDKShareKit'
+  pod 'FBSDKLoginKit'
 
 end

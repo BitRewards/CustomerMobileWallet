@@ -5,6 +5,7 @@ import {
   View,
   Image,
   ImageSourcePropType,
+  TextInputProps,
 } from 'react-native';
 
 const styles = StyleSheet.create({
@@ -31,28 +32,28 @@ const styles = StyleSheet.create({
   },
 });
 
-export interface AuthInputFieldProps {
-  placeholder: string;
+export interface AuthInputFieldProps extends TextInputProps {
   icon: ImageSourcePropType;
+  isError?: boolean;
 }
 export interface State { }
 
 class AuthInputField extends React.Component<AuthInputFieldProps, State> {
   render() {
     const {
-      placeholder,
       icon,
+      isError,
     } = this.props;
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, isError ? { borderBottomColor: 'red' } : { borderBottomColor: '#30364540' }]}>
         <View style={styles.iconWrapper}>
           <Image source={icon} />
         </View>
         <TextInput
           style={styles.input}
-          placeholder={placeholder}
           placeholderTextColor={'#30364560'}
           underlineColorAndroid='transparent'
+          {...this.props}
         />
       </View>
     );

@@ -1,7 +1,7 @@
 {
-  "app.navigation.bottomLabel.SpecialOffers": "Объявления",
+  "app.navigation.bottomLabel.SpecialOffers": "Спец. предложения",
   "app.navigation.bottomLabel.Wallet": "Кошелек",
-  "app.navigation.bottomLabel.Profile": "Сделки",
-  "app.navigation.bottomLabel.Other": "Настройки",
+  "app.navigation.bottomLabel.Profile": "Профиль",
+  "app.navigation.bottomLabel.Other": "Другое",
   "app.navigation.settings.Logout": "Выйти"
 }

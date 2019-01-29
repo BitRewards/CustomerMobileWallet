@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   FlatList,
+  RefreshControl,
   ListRenderItemInfo,
   StyleSheet,
   View,
@@ -17,11 +18,16 @@ import EarnBitItem from '../../components/listItems/EarnBitItem';
 import SpendBitItem from '../../components/listItems/SpendBitItem';
 import CentredActivityIndicator from '../../components/CentredActivityIndicator';
 import { SpecialOfferActions } from '../../actions/specialOffers';
-import EarnBitDialog from '../../components/Dialogs/EarnBitDialog';
 import {
+  MerchantInfo,
   OfferActionItem,
   OfferRewardItem,
 } from '../../services/responseTypes';
+import { NavigationActions } from '../../actions/navigation';
+import EmptyList from '../../components/EmptyList';
+import { createStructuredSelectorSpecialOffers } from '../../selectors/SpecialOffers';
+import { PaginatedListProps } from '../../types/paginatedListProps';
+import DevModeDialog from '../../components/Dialogs/DevModeDialog';
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -57,45 +63,56 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 15,
     paddingBottom: 9,
+    flexGrow: 1,
   },
 });
 
+const DEV_PASSCODE = 'iddqd';
+
 const EARN_BIT_TAB_INDEX = 0;
 const REDEEM_BIT_TAB_INDEX = 1;
+const PAGE_SIZE_LIMIT = 15;
 
-export interface SpecialOffersProps {
-  fetchOfferActionsList: (page: number, perPage: number) => any;
-  fetchOfferRewardList: (page: number, perPage: number) => any;
-  isFetching: boolean;
-  actionItems: [OfferActionItem];
-  rewardItems: any;
-  error: any;
+export interface SpecialOffersDispatchProps {
+  refreshOfferActionsList: () => void;
+  refreshOfferRewardList: () => void;
+  fetchOfferActionsList: (page: number, perPage: number) => void;
+  fetchOfferRewardList: (page: number, perPage: number) => void;
+  openSpecialActionInWalletMerchant: (actionItem: OfferActionItem) => void;
+  openSpecialRewardInWalletMerchant: (rewardItem: OfferRewardItem) => void;
+}
+
+export interface SpecialOffersStateProps {
+  actionsList: PaginatedListProps<OfferActionItem>;
+  rewardsList: PaginatedListProps<OfferRewardItem>;
 }
 
 export interface SpecialOffersState {
   activeTab: number;
-  isModalVisible: boolean;
+  filterValue?: string;
+  isDevMode: boolean;
 }
 
-class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersState> {
+class SpecialOffers extends React.Component<SpecialOffersStateProps & SpecialOffersDispatchProps, SpecialOffersState> {
   private flatList: any;
 
-  constructor(props: SpecialOffersProps) {
+  constructor(props: SpecialOffersStateProps & SpecialOffersDispatchProps) {
     super(props);
 
     this.state = {
       activeTab: 0,
-      isModalVisible: false,
+      filterValue: '',
+      isDevMode: false,
     };
   }
 
   componentDidMount() {
     const {
-      fetchOfferActionsList,
-      fetchOfferRewardList,
+      refreshOfferActionsList,
+      refreshOfferRewardList,
     } = this.props;
-    fetchOfferActionsList(1, 15);
-    fetchOfferRewardList(1, 15);
+    refreshOfferActionsList();
+    refreshOfferRewardList();
   }
 
   handleChangeTab = (index: number) => {
@@ -108,21 +125,73 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
     }
   }
 
-  getFlatListData = () => {
+  getFlatListData = (): any => {
     const {
-      actionItems,
-      rewardItems,
+      actionsList,
+      rewardsList,
     } = this.props;
+    const {
+      activeTab,
+      filterValue,
+    } = this.state;
+    const filteredActionItems = actionsList.items.filter(
+      (value: OfferActionItem) => {
+        const brand = value.brand || '';
+        const description = value.action.description || '';
+        if (!filterValue || filterValue === '') {
+          return true;
+        } else if (
+          filterValue && (
+            brand.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+            || description.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+          )
+        ) {
+          return true;
+        }
+        return false;
+      },
+    );
+    const filteredRewardItems = rewardsList.items.filter(
+      (value: OfferRewardItem) => {
+        const brand = value.brand || '';
+        const description = value.reward.description || '';
+        const title = value.reward.title || '';
+        if (!filterValue || filterValue === '') {
+          return true;
+        } else if (
+          filterValue && (
+            brand.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+            || description.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+            || value.reward.partner.title.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+            || title.toLowerCase().indexOf(filterValue.toLowerCase()) > -1
+          )
+        ) {
+          return true;
+        }
+        return false;
+      },
+    );
+    switch (activeTab) {
+      case EARN_BIT_TAB_INDEX:
+        return filteredActionItems;
+      case REDEEM_BIT_TAB_INDEX:
+        return filteredRewardItems;
+      default:
+        return [];
+    }
+  }
+
+  getEmptyMessage = (): string => {
     const {
       activeTab,
     } = this.state;
     switch (activeTab) {
       case EARN_BIT_TAB_INDEX:
-        return actionItems;
+        return 'list of actions is empty';
       case REDEEM_BIT_TAB_INDEX:
-        return rewardItems;
+        return 'list of rewards is empty';
       default:
-        return [];
+        return '';
     }
   }
 
@@ -136,23 +205,30 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
     switch (activeTab) {
       case EARN_BIT_TAB_INDEX:
         const actionItem: OfferActionItem = item;
+        const earnBitPress = () => this.onEarnBitPress(actionItem);
+        const actionImage = actionItem.image ? actionItem.image : actionItem.action.partner.image;
         return (
           <EarnBitItem
-            image={'https://crm.inprg.com/assets/icons/gift.svg'}
+            image={actionImage}
             brand={actionItem.brand}
-            description={actionItem.action.description}
-            onPress={this.onEarnBitPress}
+            merchantName={actionItem.action.partner.title}
+            description={actionItem.action.title}
+            onPress={earnBitPress}
           />
         );
       case REDEEM_BIT_TAB_INDEX:
         const rewardItem: OfferRewardItem = item;
+        const spendBitPress = () => this.onSpendBitPress(rewardItem);
+        const rewardImage = rewardItem.image ? rewardItem.image : rewardItem.reward.partner.image;
         return (
           <SpendBitItem
-            image={'https://crm.inprg.com/assets/icons/gift.svg'}
+            image={rewardImage}
             brand={rewardItem.brand}
             partnerTitle={rewardItem.reward.partner.title}
             title={rewardItem.reward.title}
             description={rewardItem.reward.description}
+            price={`${rewardItem.reward.priceBitTokensStr} BIT`}
+            onPress={spendBitPress}
           />
         );
       default:
@@ -162,22 +238,94 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
 
   keyExtractor = (item: any, index: number) => `offer-${index}`;
 
-  onEarnBitPress = () => {
-    this.setState({ isModalVisible: true });
+  onRefresh = () => {
+    const {
+      activeTab,
+    } = this.state;
+    const {
+      refreshOfferActionsList,
+      refreshOfferRewardList,
+    } = this.props;
+    switch (activeTab) {
+      case EARN_BIT_TAB_INDEX:
+        refreshOfferActionsList();
+        break;
+      case REDEEM_BIT_TAB_INDEX:
+        refreshOfferRewardList();
+        break;
+      default:
+        return;
+    }
   }
 
-  closeModal = () => {
-    this.setState({ isModalVisible: false });
+  loadNext = () => {
+    const {
+      activeTab,
+    } = this.state;
+    const {
+      fetchOfferActionsList,
+      fetchOfferRewardList,
+      actionsList,
+      rewardsList,
+    } = this.props;
+    switch (activeTab) {
+      case EARN_BIT_TAB_INDEX:
+        if (!actionsList.isReachedEnd) {
+          fetchOfferActionsList(actionsList.lastLoadedPage + 1, PAGE_SIZE_LIMIT);
+        }
+        break;
+      case REDEEM_BIT_TAB_INDEX:
+        if (!rewardsList.isReachedEnd) {
+          fetchOfferRewardList(rewardsList.lastLoadedPage + 1, PAGE_SIZE_LIMIT);
+        }
+        break;
+      default:
+        return;
+    }
+  }
+
+  onEarnBitPress = (item: OfferActionItem) => {
+    const {
+      openSpecialActionInWalletMerchant,
+    } = this.props;
+    openSpecialActionInWalletMerchant(item);
+  }
+
+  onSpendBitPress = (item: OfferRewardItem) => {
+    const {
+      openSpecialRewardInWalletMerchant,
+    } = this.props;
+    openSpecialRewardInWalletMerchant(item);
+  }
+
+  onSearchChange = (text: string) => {
+    this.setState({ filterValue: text });
+  }
+
+  onSearchSubmitEditing = () => {
+    const {
+      filterValue,
+    } = this.state;
+    if (filterValue && filterValue.toLowerCase() === DEV_PASSCODE) {
+      this.setState({ isDevMode: true });
+    }
+  }
+
+  onCloseDevMode = () => {
+    this.setState({ isDevMode: false });
   }
 
   render() {
     const {
-      isFetching,
+      actionsList,
+      rewardsList,
     } = this.props;
     const {
-      isModalVisible,
+      filterValue,
+      isDevMode,
     } = this.state;
     const flatListData = this.getFlatListData();
+    const isFetching = actionsList.isFetching || rewardsList.isFetching;
     return (
       <SafeAreaView style={styles.safeContainer}>
         <View style={styles.container}>
@@ -187,7 +335,11 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
           />
           <View style={styles.offersHeader}>
             <View style={styles.searchWrapper}>
-              <Search />
+              <Search
+                value={filterValue}
+                onChangeText={this.onSearchChange}
+                onSubmitEditing={this.onSearchSubmitEditing}
+              />
             </View>
             {
               false && (
@@ -211,19 +363,27 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
             !(flatListData.length === 0 && isFetching) && (
               <FlatList
                 ref={ref => (this.flatList = ref)}
+                refreshControl={(
+                  <RefreshControl
+                    refreshing={actionsList.isRefreshing || rewardsList.isRefreshing}
+                    onRefresh={this.onRefresh}
+                  />
+                )}
                 contentContainerStyle={styles.listContainer}
                 data={flatListData}
-                extraData={this.props}
+                extraData={[this.props, filterValue]}
                 keyExtractor={this.keyExtractor}
                 renderItem={this.renderItem}
+                onEndReached={this.loadNext}
+                onEndReachedThreshold={0.3}
+                ListEmptyComponent={<EmptyList emptyMessage={this.getEmptyMessage()} />}
               />
             )
           }
-          <EarnBitDialog
-            onRequestClose={this.closeModal}
-            visible={isModalVisible}
-          >
-          </EarnBitDialog>
+          <DevModeDialog
+            visible={isDevMode}
+            onRequestClose={this.onCloseDevMode}
+          />
         </View>
       </SafeAreaView>
     );
@@ -231,15 +391,15 @@ class SpecialOffers extends React.Component<SpecialOffersProps, SpecialOffersSta
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
+  refreshOfferActionsList: () => dispatch(SpecialOfferActions.refreshOfferActionsList()),
+  refreshOfferRewardList: () => dispatch(SpecialOfferActions.refreshOfferRewardList()),
   fetchOfferActionsList: (page: number, perPage: number) => dispatch(SpecialOfferActions.fetchOfferActionsList(page, perPage)),
   fetchOfferRewardList: (page: number, perPage: number) => dispatch(SpecialOfferActions.fetchOfferRewardList(page, perPage)),
+  openWalletMerchant: (merchant: MerchantInfo) => dispatch(NavigationActions.openWalletMerchant(merchant)),
+  openSpecialActionInWalletMerchant: (actionItem: OfferActionItem) => dispatch(NavigationActions.openSpecialActionInWalletMerchant(actionItem)),
+  openSpecialRewardInWalletMerchant: (rewardItem: OfferRewardItem) => dispatch(NavigationActions.openSpecialRewardInWalletMerchant(rewardItem)),
 });
 
-const mapStateToProps = (state: any) => ({
-  isFetching: state.specialOffers.get('isFetching'),
-  actionItems: state.specialOffers.get('actionItems').toJS(),
-  rewardItems: state.specialOffers.get('rewardItems').toJS(),
-  error: state.specialOffers.get('error'),
-});
+const mapStateToProps = () => createStructuredSelectorSpecialOffers;
 
 export default connect(mapStateToProps, mapDispatchToProps)(SpecialOffers);

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   FlatList,
+  RefreshControl,
   ListRenderItemInfo,
   StyleSheet,
   View,
@@ -18,8 +19,14 @@ import CentredActivityIndicator from '../../components/CentredActivityIndicator'
 import {
   totalBalanceAmountSelector,
   totalFiatAmountSelector,
+  totalFiatCurrencySelector,
 } from '../../selectors/wallet';
 import { MerchantInfo } from '../../services/responseTypes';
+import EmptyList from '../../components/EmptyList';
+import {
+  getFiatCurrencyString,
+  getBitValueString,
+} from '../../utils/currency';
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -58,6 +65,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 15,
     paddingBottom: 9,
+    flexGrow: 1,
   },
   listHeaderText: {
     fontSize: 15,
@@ -84,13 +92,16 @@ const styles = StyleSheet.create({
 
 export interface WalletProps {
   openWalletMerchant: (merchant: MerchantInfo) => void;
-  openWalletHistory: () => void;
+  openHistory: () => void;
+  refreshWalletList: () => void;
   fetchWalletList: () => void;
+  isRefreshing: boolean;
   isFetching: boolean;
   walletItems: any;
   error: any;
   totalBalanceAmount: number;
   totalFiatAmount: number;
+  totalFiatCurrency: string;
 }
 export interface State { }
 
@@ -120,6 +131,7 @@ class Wallet extends React.Component<WalletProps, State> {
       <MerchantItem
         onPress={onPress}
         highlight
+        image={item.partner.image}
         title={item.partner.title}
         balanceAmount={item.balanceAmount}
       />
@@ -128,12 +140,21 @@ class Wallet extends React.Component<WalletProps, State> {
 
   keyExtractor = (item: any, index: number) => `wallet-${index}`;
 
+  onRefresh = (): void => {
+    const {
+      refreshWalletList,
+    } = this.props;
+    refreshWalletList();
+  }
+
   render() {
     const {
-      openWalletHistory,
+      openHistory,
+      isRefreshing,
       isFetching,
       totalBalanceAmount,
       totalFiatAmount,
+      totalFiatCurrency,
     } = this.props;
     const flatListData = this.getFlatListData();
     return (
@@ -149,14 +170,14 @@ class Wallet extends React.Component<WalletProps, State> {
                 {'Summary balance'}
               </Text>
               <Text style={styles.balance}>
-                {`${totalBalanceAmount} BIT`}
+                {getBitValueString(totalBalanceAmount)}
               </Text>
               <Text style={styles.subBalance}>
-                {`≈${totalFiatAmount}₽`}
+                {`≈${getFiatCurrencyString(totalFiatAmount, totalFiatCurrency)}`}
               </Text>
             </View>
             <View style={styles.historyButtonContainer}>
-              <Touchable onPress={openWalletHistory}>
+              <Touchable onPress={openHistory}>
                 <View style={styles.historyButton}>
                   <Text style={styles.historyButtonText}>
                     {'History'}
@@ -172,11 +193,18 @@ class Wallet extends React.Component<WalletProps, State> {
           {
             !(flatListData.length === 0 && isFetching) && (
               <FlatList
+                refreshControl={(
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={this.onRefresh}
+                  />
+                )}
                 contentContainerStyle={styles.listContainer}
                 data={flatListData}
                 keyExtractor={this.keyExtractor}
                 renderItem={this.renderItem}
                 ListHeaderComponent={<Text style={styles.listHeaderText}>{'Wallet list'}</Text>}
+                ListEmptyComponent={<EmptyList emptyMessage={'wallet is empty'} />}
               />
             )
           }
@@ -188,15 +216,18 @@ class Wallet extends React.Component<WalletProps, State> {
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
   openWalletMerchant: (merchant: MerchantInfo) => dispatch(NavigationActions.openWalletMerchant(merchant)),
-  openWalletHistory: () => dispatch(NavigationActions.openWalletHistory()),
+  openHistory: () => dispatch(NavigationActions.openHistory()),
+  refreshWalletList: () => dispatch(WalletActions.refreshWalletList()),
   fetchWalletList: () => dispatch(WalletActions.fetchWalletList()),
 });
 
 const mapStateToProps = (state: any) => ({
+  isRefreshing: state.wallet.get('isRefreshing'),
   isFetching: state.wallet.get('isFetching'),
   walletItems: state.wallet.get('items').toJS(),
   totalBalanceAmount: totalBalanceAmountSelector(state),
   totalFiatAmount: totalFiatAmountSelector(state),
+  totalFiatCurrency: totalFiatCurrencySelector(state),
   error: state.wallet.get('error'),
 });
 

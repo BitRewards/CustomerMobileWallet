@@ -1,56 +1,21 @@
 import * as React from 'react';
 import {
-  Modal,
-  Dimensions,
   StyleSheet,
   View,
+  Image,
 } from 'react-native';
 import Touchable from '../Touchable';
-
-const { width, height } = Dimensions.get('window');
-
-const MODAL_DIALOG_SAFE_MARGIN = 24;
+import ModalDialogBaseContainer from './ModalDialogBaseContainer';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
-    flexDirection: 'column',
-    backgroundColor: 'rgba(0, 0, 0, 0)',
+  modalCloseWrapper: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    alignSelf: 'flex-end',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  modalShadeWrapper: {
-    position: 'absolute',
-    width,
-    height,
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
-    zIndex: 1000,
-  },
-  modalShade: {
-    position: 'absolute',
-    width,
-    height,
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
-    flexWrap: 'wrap',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  centerContainer: {
-    position: 'absolute',
-    maxHeight: height - MODAL_DIALOG_SAFE_MARGIN * 2,
-    zIndex: 1001,
-    margin: MODAL_DIALOG_SAFE_MARGIN,
-  },
-  itemContainer: {
-    paddingTop: MODAL_DIALOG_SAFE_MARGIN,
-    overflow: 'scroll',
-    zIndex: 1005,
+    zIndex: 1006,
   },
 });
 
@@ -70,7 +35,6 @@ export interface ModalDialogProps {
 export interface State { }
 
 class ModalDialog extends React.Component<ModalDialogProps, State> {
-  private modal: any;
 
   onShadePress = () => {
     const {
@@ -89,28 +53,20 @@ class ModalDialog extends React.Component<ModalDialogProps, State> {
       shadeColor,
     } = this.props;
     return (
-      <Modal
-        ref={ref => (this.modal = ref)}
-        animationType='fade'
-        transparent
+      <ModalDialogBaseContainer
         visible={visible}
         onRequestClose={onRequestClose}
+        shadeColor={shadeColor}
       >
-        <View style={styles.container}>
-          <View style={styles.modalShadeWrapper}>
-            <Touchable
-              onPress={this.onShadePress}
-            >
-              <View style={[styles.modalShade, shadeColor ? { backgroundColor: shadeColor } : {}]} />
-            </Touchable>
-          </View>
-          <View style={styles.centerContainer}>
-            <View style={styles.itemContainer}>
-              {children}
+        <View>
+          <Touchable onPress={this.onShadePress} style={styles.modalCloseWrapper}>
+            <View style={styles.modalCloseWrapper}>
+              <Image source={require('../../img/Close_modal.png')} />
             </View>
-          </View>
+          </Touchable>
+          {children}
         </View>
-      </Modal>
+      </ModalDialogBaseContainer>
     );
   }
 }

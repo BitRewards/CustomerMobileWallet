@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import ItemContainer from './ItemContainer';
 import Touchable from '../Touchable';
-import BitImage from '../BitImage'
+import BitImage from '../BitImage';
 
 const styles = StyleSheet.create({
   container: {
@@ -47,8 +47,12 @@ const styles = StyleSheet.create({
     fontFamily: 'ProximaNova-Regular',
     marginBottom: 17,
   },
+  buttonWrapper: {
+    flexDirection: 'row',
+  },
   buttonContainer: {
-    width: 100,
+    minWidth: 100,
+    flexGrow: 0,
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -83,6 +87,7 @@ export interface EarnBitItemProps {
   partnerTitle?: string;
   title?: string;
   description?: string;
+  price: string;
 }
 export interface State { }
 
@@ -103,6 +108,7 @@ class SpendBitItem extends React.Component<EarnBitItemProps, State> {
       title,
       description,
       image,
+      price,
     } = this.props;
     return (
       <ItemContainer>
@@ -117,14 +123,16 @@ class SpendBitItem extends React.Component<EarnBitItemProps, State> {
             <Text style={styles.descriptionText}>
               {description}
             </Text>
-            <View style={styles.buttonContainer}>
-              <Touchable onPress={this.handleClick}>
-                <View style={styles.button}>
-                  <Text style={styles.buttonText}>
-                    {'200 BIT'}
-                  </Text>
-                </View>
-              </Touchable>
+            <View style={styles.buttonWrapper}>
+              <View style={styles.buttonContainer}>
+                <Touchable onPress={this.handleClick}>
+                  <View style={styles.button}>
+                    <Text style={styles.buttonText}>
+                      {price}
+                    </Text>
+                  </View>
+                </Touchable>
+              </View>
             </View>
           </View>
           <View style={styles.iconColumn}>

@@ -1,10 +1,40 @@
 import * as React from 'react';
-import { Image, ImageSourcePropType, ImagePropsBase } from 'react-native';
+import {
+  Text,
+  Image,
+  ImageSourcePropType,
+  ImagePropsBase,
+  StyleSheet,
+} from 'react-native';
 import { NavigationScreenConfig } from 'react-navigation';
+import { FormattedMessage } from 'react-intl';
 
-export function createBottomBarOptions(label: string, src: ImageSourcePropType): NavigationScreenConfig<any> {
+const styles = StyleSheet.create({
+  bottomBarLabel: {
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  bottomBarIcon: {
+    height: 24,
+    width: 24,
+  },
+});
+
+
+export function createBottomBarOptions(labelMessageId: string, src: ImageSourcePropType): NavigationScreenConfig<any> {
   return {
-    tabBarLabel: label,
+    tabBarLabel: ({ tintColor }: any) => (
+      <FormattedMessage
+        id={labelMessageId}
+      >
+        {text => (
+          <Text style={[styles.bottomBarLabel, { color: tintColor }]}>
+            {text}
+          </Text>
+        )}
+      </FormattedMessage>
+
+    ),
     tabBarIcon: (props: ImagePropsBase) => <Image
       source={src}
       tintColor={props.tintColor}

@@ -8,8 +8,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-navigation';
 import { connect } from 'react-redux';
-import OtherOptionItem from '../../components/listItems/OtherOptionItem'
-import Separator from '../../components/listItems/Separator'
+import { Dispatch } from 'redux';
+import OtherOptionItem from '../../components/listItems/OtherOptionItem';
+import Separator from '../../components/listItems/Separator';
+import { NavigationActions } from '../../actions/navigation';
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -24,27 +26,45 @@ const styles = StyleSheet.create({
   },
 });
 
-export interface Props { }
+interface OptionItem {
+  title: string;
+  onPress: () => void;
+}
+
+export interface OtherProps {
+  openFaq: () => void;
+}
 
 export interface State { }
 
-class Other extends React.Component<Props, State> {
+class Other extends React.Component<OtherProps, State> {
+  static navigationOptions = {
+    title: 'Other',
+    headerStyle: {
+      backgroundColor: '#ffffff',
+    },
+  };
+
   private flatList: any;
 
   getFlatListData = () => {
+    const {
+      openFaq,
+    } = this.props;
     return [
-      { title: 'Settings' },
-      { title: 'FAQ' },
+      { title: 'Settings', onPress: () => {} },
+      { title: 'Faq', onPress: openFaq },
     ];
   }
 
-  renderItem = (listItemInfo: ListRenderItemInfo<any>) => {
+  renderItem = (listItemInfo: ListRenderItemInfo<OptionItem>) => {
     const {
       item,
     } = listItemInfo;
     return (
       <OtherOptionItem
         title={item.title}
+        onPress={item.onPress}
       />
     );
   }
@@ -81,7 +101,8 @@ class Other extends React.Component<Props, State> {
   }
 }
 
-const mapDispatchToProps = () => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  openFaq: () => dispatch(NavigationActions.openFaq()),
 });
 
 const mapStateToProps = () => ({
